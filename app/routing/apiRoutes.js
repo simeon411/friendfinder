@@ -3,6 +3,7 @@
 // We are linking our routes to a series of "data" sources.
 // These data sources hold arrays of information on table-data, waitinglist, etc.
 // ===============================================================================
+var bodyParser = require("body-parser");
 
 var friendsData = require("../data/friends.js");
 
@@ -33,17 +34,37 @@ module.exports = function(app) {
   // ---------------------------------------------------------------------------
 
   app.post("/api/friends", function(req, res) {
-    // Note the code here. Our "server" will respond to requests and let users know if they have a table or not.
-    // It will do this by sending out the value "true" have a table
-    // req.body is available since we're using the body-parser middleware
-    if (tableData.length < 5) {
-      tableData.push(req.body);
-      res.json(true);
+    var newFriend = req.body;
+    var scores = req.body['scores[]'];
+    var matchesArray = []
+
+    function add(a, b) {
+      return a + b;
     }
-    else {
-      waitListData.push(req.body);
-      res.json(false);
+
+    function indexOfSmallest(a) {
+      var lowest = 0;
+      for (var i = 1; i < a.length; i++) {
+        if (a[i] < a[lowest]) lowest = i;
+      }
+      return lowest;
     }
+
+    for (var x = 0; x < friendsData.length; x++){
+      var matches = [];
+      for (var y = 0; y < scores.length; y++){
+        matches.push(Math.abs(scores[y] - friendsData[x].scores[y]));
+      }
+      var sum = matches.reduce(add,0);
+      matchesArray.push(sum);
+    }
+  
+
+    res.json(friendsData[indexOfSmallest(matchesArray)]);
+
+    friendsData.push(newFriend);
+
+    
   });
 
 };
